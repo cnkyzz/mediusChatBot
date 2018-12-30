@@ -1,0 +1,56 @@
+<!-- chat/templates/chat/room.html -->
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Medius Chatbot</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
+</head> 
+<body>
+    <div class="container">
+        <textarea id="chat-log" cols="100" rows="20"></textarea><br/>
+        <input id="chat-message-input" type="text" size="100"/><br/>
+        <input id="chat-message-submit" type="button" value="Send"/>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+</body>
+<script>
+    var chatSocket = new WebSocket(
+        'ws://' + window.location.host +
+        '/ws/chat/');
+
+    document.querySelector('#chat-log').value += "Bot: Hello, I am going to ask you few questions that will help me know you better.\nBot: What is your name?\n";
+    chatSocket.onmessage = function(e) {
+        var data = JSON.parse(e.data);
+        var message = data['userMessage'];
+        var bot = data['bot'];
+        document.querySelector('#chat-log').value += ("User: " + message + '\n');
+        document.querySelector('#chat-log').value += ("Bot: " + bot + '\n');
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    document.querySelector('#chat-message-input').focus();
+    document.querySelector('#chat-message-input').onkeyup = function(e) {
+        if (e.keyCode === 13) {  // enter, return
+            document.querySelector('#chat-message-submit').click();
+        }
+    };
+
+    document.querySelector('#chat-message-submit').onclick = function(e) {
+        var messageInputDom = document.querySelector('#chat-message-input');
+        var message = messageInputDom.value;
+        chatSocket.send(JSON.stringify({
+            'message': message,
+        }));
+
+        messageInputDom.value = '';
+    };
+</script>
+</html>
